@@ -1,0 +1,30 @@
+name: Setup npm and install
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    default: '18'
+    required: false
+    type: string
+  wasm-pack-version:
+    description: 'wasm-pack version to use'
+    default: 'v0.13.0'
+    required: false
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+
+    - name: Install wasm-pack
+      uses: jetli/wasm-pack-action@v0.4.0
+      with:
+        version: ${{ inputs.wasm-pack-version }}
+    
+    - name: Install Dependencies
+      shell: bash
+      run: npm ci

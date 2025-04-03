@@ -1,0 +1,107 @@
+# note: i set "Ignored build step" in Vercel settings for the project to not build automatically
+name: Deploy silk-demo-app to Vercel
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_SILK_DEMO_APP_PROJECT_ID }}
+  # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  # TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+on: 
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  Deploy-Preview:
+    permissions: write-all # Best to make this more granular later
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Scan for vulnerabilities
+      - uses: microsoft/DevSkim-Action@v1
+        with:
+          ignore-globs: "**/.git/**,**/bin/**"
+      - uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: devskim-results.sarif
+      
+      - uses: ./.github/actions/setup-npm-and-install
+        with:
+          node-version: 18
+          wasm-pack-version: v0.13.0
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Build Silk Demo App
+        run: npm run build
+            
+      - name: Pull Preview Environment From Vercel
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        # if: success() && github.ref_name != 'main'
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }} 
+      
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
+  Deploy-Staging:
+    runs-on: ubuntu-latest
+    environment: Staging
+    if: github.ref_name == 'dev'
+    needs: Deploy-Preview
+    steps:    
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/setup-npm-and-install
+        with:
+          node-version: 18
+          wasm-pack-version: v0.13.0
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Build Silk Demo App
+        run: npm run build
+      
+      - name: Pull Staging Environment From Vercel
+        run: vercel pull --yes --environment=staging --token=${{ secrets.VERCEL_TOKEN }}
+        # if: success() && github.ref_name == 'main'
+        
+      - name: Build Project Artifacts
+        run: vercel build --target=staging --token=${{ secrets.VERCEL_TOKEN }} 
+        
+      - name: Deploy to Staging
+        run: vercel deploy --target=staging --prebuilt --token=${{ secrets.VERCEL_TOKEN }}      
+
+  Deploy-Production:
+    runs-on: ubuntu-latest
+    environment: Production
+    if: github.ref_name == 'main'
+    needs: Deploy-Preview
+    steps:    
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/setup-npm-and-install
+        with:
+          node-version: 18
+          wasm-pack-version: v0.13.0
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Build Silk Demo App
+        run: npm run build
+      
+      - name: Pull Production Environment From Vercel
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        # if: success() && github.ref_name == 'main'
+        
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} 
+        
+      - name: Deploy to Production
+        run: vercel deploy --prod --prebuilt --token=${{ secrets.VERCEL_TOKEN }}      

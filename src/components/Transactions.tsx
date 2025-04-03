@@ -12,7 +12,7 @@ function Transactions() {
   })
   const {
     data: lowRiskTransferData,
-    isLoading: lowRiskTransferIsLoading,
+    isPending: lowRiskTransferIsLoading,
     isSuccess: lowRiskTransferIsSuccess,
     error: lowRiskTransferError,
     sendTransaction: sendTransactionLowRiskTransfer
@@ -25,7 +25,7 @@ function Transactions() {
   })
   const {
     data: highRiskCallData,
-    isLoading: highRiskCallIsLoading,
+    isPending: highRiskCallIsLoading,
     isSuccess: highRiskCallIsSuccess,
     error: highRiskCallError,
     sendTransaction: sendTransactionHighRiskCall

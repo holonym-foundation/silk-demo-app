@@ -1,7 +1,7 @@
-import { useConnect } from "wagmi";
+import { useConnect } from 'wagmi'
 
 function LoginSelector() {
-  const { connect, connectors, data: connectData } = useConnect();
+  const { connect, connectors, data: connectData } = useConnect()
 
   return (
     <div>
@@ -13,32 +13,33 @@ function LoginSelector() {
             .loginSelector(window.ethereum)
             // @ts-ignore
             .then((result) => {
-              if (result === "silk") {
+              if (result === 'silk') {
                 // @ts-ignore
-                window.ethereum = window.silk;
-              } else if (result === "injected") {
+                window.ethereum = window.silk
+              } else if (result === 'injected') {
                 connect({
                   connector: connectors.filter(
-                    (conn) => conn.id === "injected",
-                  )[0],
-                });
-              } else if (result === "walletconnect") {
+                    (conn) => conn.id === 'injected'
+                  )[0]
+                })
+              } else if (result === 'walletconnect') {
+                console.log('connectors', connectors)
                 connect({
                   connector: connectors.filter(
-                    (conn) => conn.id === "walletConnect",
-                  )[0],
-                });
+                    (conn) => conn.id === 'walletConnect'
+                  )[0]
+                })
               }
             })
             // @ts-ignore
-            .catch((err) => console.error(err));
+            .catch((err) => console.error(err))
         }}
-        className="button"
+        className='button'
       >
         Login With Selector
       </button>
     </div>
-  );
+  )
 }
 
-export default LoginSelector;
+export default LoginSelector

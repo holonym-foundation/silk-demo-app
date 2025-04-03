@@ -1,5 +1,9 @@
-import { useAccount, useSwitchChain } from "wagmi";
+import {
+  useAccount,
+  useSwitchChain,
+} from "wagmi";
 import { hardhat } from "wagmi/chains";
+
 
 function SwitchChains() {
   const { chain } = useAccount();
@@ -11,29 +15,29 @@ function SwitchChains() {
         <div>
           <h2>Switch Chains Demo</h2>
           <p>Connected to: {chain?.name}</p>
-          <button
+          <button 
             onClick={() => {
               if (switchChain) {
-                switchChain({ chainId: 1 });
+                switchChain({chainId: 1})
               } else {
-                console.error("switchChain is not defined");
+                console.error('switchChain is not defined')
               }
-            }}
+            }} 
             className="button"
           >
             Switch to Ethereum Mainnet
           </button>
         </div>
-
+        
         <div>
-          <button
+          <button 
             onClick={() => {
               if (switchChain) {
-                switchChain({ chainId: 11155111 });
+                switchChain({chainId: 11155111})
               } else {
-                console.error("switchChain is not defined");
+                console.error('switchChain is not defined')
               }
-            }}
+            }} 
             className="button"
           >
             Switch to Ethereum Sepolia
@@ -41,14 +45,14 @@ function SwitchChains() {
         </div>
 
         <div>
-          <button
+          <button 
             onClick={() => {
               if (switchChain) {
-                switchChain({ chainId: 137 });
+                switchChain({chainId: 137})
               } else {
-                console.error("switchChain is not defined");
+                console.error('switchChain is not defined')
               }
-            }}
+            }} 
             className="button"
           >
             Switch to Polygon PoS
@@ -56,14 +60,14 @@ function SwitchChains() {
         </div>
 
         <div>
-          <button
+          <button 
             onClick={() => {
               if (switchChain) {
-                switchChain({ chainId: 100 });
+                switchChain({chainId: 100})
               } else {
-                console.error("switchChain is not defined");
+                console.error('switchChain is not defined')
               }
-            }}
+            }} 
             className="button"
           >
             Switch to Gnosis
@@ -71,30 +75,45 @@ function SwitchChains() {
         </div>
 
         <div>
-          <button
+          <button 
             onClick={() => {
               if (switchChain) {
-                switchChain({ chainId: 10 });
+                switchChain({chainId: 10})
               } else {
-                console.error("switchChain is not defined");
+                console.error('switchChain is not defined')
               }
-            }}
+            }} 
             className="button"
           >
             Switch to Optimism
           </button>
         </div>
 
-        {process.env.NODE_ENV == "development" && (
+        <div>
+          <button 
+            onClick={() => {
+              if (switchChain) {
+                switchChain({chainId: 84532})
+              } else {
+                console.error('switchChain is not defined')
+              }
+            }} 
+            className="button"
+          >
+            Switch to Base Sepolia
+          </button>
+        </div>
+
+        {process.env.NODE_ENV == 'development' && (
           <div>
-            <button
+            <button 
               onClick={() => {
                 if (switchChain) {
-                  switchChain({ chainId: hardhat.id });
+                  switchChain({chainId: hardhat.id})
                 } else {
-                  console.error("switchChain is not defined");
+                  console.error('switchChain is not defined')
                 }
-              }}
+              }} 
               className="button"
             >
               Switch to Local Hardhat

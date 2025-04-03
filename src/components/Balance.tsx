@@ -6,17 +6,15 @@ function Balance() {
 
   const result = useBalance({
     address,
-  });
+  })
 
-  const formatted = result.data?.value
-    ? formatUnits(result.data?.value, result.data?.decimals)
-    : undefined;
+  const formatted = result.data?.value ? formatUnits(result.data?.value, result.data?.decimals) : undefined;
 
   return (
     <div>
       <h2>Balance Demo</h2>
       {isConnected ? (
-        <p>Balance: {formatted ?? "<null>"}</p>
+        <p>Balance: {formatted ?? '<null>'}</p>
       ) : (
         <p>Connect to view balance</p>
       )}

@@ -1,33 +1,33 @@
-"use client";
+'use client'
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react'
 import {
   initSilk,
-  SilkEthereumProviderInterface,
-} from "@silk-wallet/silk-wallet-sdk";
+  SilkEthereumProviderInterface
+} from '@silk-wallet/silk-wallet-sdk'
 import {
   AuthenticationMethod,
-  SocialProvider,
-} from "@silk-wallet/silk-interface-core";
+  SocialProvider
+} from '@silk-wallet/silk-interface-core'
 
 interface WhitelabelProps {
   config?: {
     styles?: {
-      darkMode?: boolean;
-    };
-    allowedSocials?: SocialProvider[];
-    authenticationMethods?: AuthenticationMethod[];
-  };
-  className?: string;
+      darkMode?: boolean
+    }
+    allowedSocials?: SocialProvider[]
+    authenticationMethods?: AuthenticationMethod[]
+  }
+  className?: string
 }
 
-export default function Whitelabel({ className = "" }: WhitelabelProps) {
+export default function Whitelabel({ className = '' }: WhitelabelProps) {
   const [silkProvider, setSilkProvider] =
-    useState<SilkEthereumProviderInterface | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+    useState<SilkEthereumProviderInterface | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) return
 
     // Initialize Silk with preview mode
     const provider = initSilk({
@@ -39,11 +39,11 @@ export default function Whitelabel({ className = "" }: WhitelabelProps) {
       //     allowedSocials: config?.allowedSocials,
       //     authenticationMethods: config?.authenticationMethods
       //   }
-    });
+    })
 
-    console.log("provider", provider);
+    console.log('provider', provider)
 
-    setSilkProvider(provider);
+    setSilkProvider(provider)
 
     // return () => {
     //   // Cleanup if needed
@@ -51,17 +51,17 @@ export default function Whitelabel({ className = "" }: WhitelabelProps) {
     //     // Add any cleanup logic here
     //   }
     // }
-  }, []);
+  }, [])
 
   const handleLogin = () => {
-    silkProvider?.login();
-  };
+    silkProvider?.login()
+  }
 
   return (
-    <div className="space-y-4 h-[1000px]">
+    <div className='space-y-4 h-[1000px]'>
       <button
         onClick={handleLogin}
-        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+        className='px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800'
       >
         Show Preview
       </button>
@@ -70,5 +70,5 @@ export default function Whitelabel({ className = "" }: WhitelabelProps) {
         className={`relative bg-transparent h-full ${className}`}
       />
     </div>
-  );
+  )
 }

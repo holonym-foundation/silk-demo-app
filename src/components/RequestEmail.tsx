@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState } from 'react'
 
 function RequestEmail() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('')
 
   return (
     <div>
@@ -12,19 +12,19 @@ function RequestEmail() {
           window.silk
             .requestEmail()
             // @ts-ignore
-            .then((result) => {
-              setEmail(result);
+            .then((result: string) => {
+              setEmail(result)
             })
             // @ts-ignore
-            .catch((err) => console.error(err));
+            .catch((err) => console.error(err))
         }}
-        className="button"
+        className='button'
       >
         Request email address
       </button>
       <p>Email: {email}</p>
     </div>
-  );
+  )
 }
 
-export default RequestEmail;
+export default RequestEmail

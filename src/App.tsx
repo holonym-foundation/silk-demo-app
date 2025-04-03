@@ -36,7 +36,7 @@ const wagmiConfig = createConfig({
   connectors: [
     injected(),
     walletConnect({
-      projectId: process.env.VITE_WALLETCONNECT_PROJECT_ID,
+      projectId: process.env.VITE_WALLETCONNECT_PROJECT_ID!,
     }),
   ],
 });

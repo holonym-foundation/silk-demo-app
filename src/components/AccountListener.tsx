@@ -54,9 +54,17 @@ function AccountListener() {
         ])
       }
 
-      // Add the event listener
-      window.silk.on('accountsChanged', handleAccountsChanged)
-      setIsListening(true)
+      // Add the event listener with error handling
+      if (typeof window.silk.on === 'function') {
+        try {
+          window.silk.on('accountsChanged', handleAccountsChanged)
+          setIsListening(true)
+        } catch (error) {
+          console.error('Failed to set up account listener:', error)
+        }
+      } else {
+        console.warn('Silk provider does not support event listeners')
+      }
 
       //   // Return a cleanup function to remove the listener when the component unmounts
       //   return () => {

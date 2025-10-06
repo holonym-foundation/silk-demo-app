@@ -16,7 +16,7 @@ function App() {
     try {
       const testReferralCode = 'aaaaaaaaaaaaaaaaaaaaaaaa'
       const provider = initSilk({
-        useStaging: true,
+        useStaging: false,
         // useStaging: process.env.VITE_VERCEL_ENV !== 'production'
         // referralCode: testReferralCode
         // config: {

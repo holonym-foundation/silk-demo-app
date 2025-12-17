@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SilkEthereumProviderInterface } from '@silk-wallet/silk-wallet-sdk'
+import { SilkEthereumProviderInterface } from '@human.tech/waap-sdk'
 
 declare global {
   interface Window {

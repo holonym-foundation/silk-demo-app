@@ -11,7 +11,7 @@ import { wagmiConfig } from './wagmi-config'
 function App() {
   const [queryClient] = useState(() => new QueryClient())
   const [silkReady, setSilkReady] = useState(false)
-  const [useStagingSwitch, setUseStagingSwitch] = useState(null);
+  const [useStagingSwitch, setUseStagingSwitch] = useState<null | boolean>(null);
 
   useEffect(() => {
     if (useStagingSwitch === null) return;

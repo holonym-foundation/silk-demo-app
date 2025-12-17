@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { parseEther, toHex } from 'viem'
 import { useAccount } from 'wagmi'
-import { JSON_RPC_METHOD } from '@silk-wallet/silk-interface-core'
-import { SilkEthereumProviderInterface } from '@silk-wallet/silk-wallet-sdk'
+import { JSON_RPC_METHOD } from '@human.tech/waap-interface-core'
+import { SilkEthereumProviderInterface } from '@human.tech/waap-sdk'
 
 // Add TypeScript declaration for window.silk
 declare global {

@@ -2,14 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import {
-  initSilk,
+  initWaaP,
   SilkEthereumProviderInterface
-} from '@silk-wallet/silk-wallet-sdk'
+} from '@human.tech/waap-sdk'
 import {
   AuthenticationMethod,
   SocialProvider
-} from '@silk-wallet/silk-interface-core'
-
+} from '@human.tech/waap-interface-core'
 interface WhitelabelProps {
   config?: {
     styles?: {
@@ -30,7 +29,7 @@ export default function Whitelabel({ className = '' }: WhitelabelProps) {
     if (!containerRef.current) return
 
     // Initialize Silk with preview mode
-    const provider = initSilk({
+    const provider = initWaaP({
       // containerElement: containerRef.current
       //   config: {
       //     styles: {

@@ -1,4 +1,5 @@
 name: Setup npm and install
+description: 'Setup Node.js and install dependencies'
 
 inputs:
   node-version:
@@ -15,10 +16,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
+        cache: ''
 
     - name: Install wasm-pack
       uses: jetli/wasm-pack-action@v0.4.0

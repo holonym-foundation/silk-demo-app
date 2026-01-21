@@ -13,8 +13,8 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "@human.tech/waap-interface-core": "^0.1.0",
-    "@human.tech/waap-sdk": "^1.0.2",
+    "@human.tech/waap-interface-core": "^0.1.1",
+    "@human.tech/waap-sdk": "^1.0.3",
     "@svgr/webpack": "^8.1.0",
     "@tanstack/react-query": "^5.0.0",
     "@vitejs/plugin-react": "^5.1.2",

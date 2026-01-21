@@ -2,6 +2,7 @@ import Login from './components/Login'
 import LoginSelector from './components/LoginSelector'
 import ConnectAccount from './components/ConnectAccount'
 import SwitchChains from './components/SwitchChains'
+import GetCurrentNetwork from './components/GetCurrentNetwork'
 import Balance from './components/Balance'
 import PersonalSign from './components/PersonalSign'
 import EthSignTypedData from './components/EthSignTypedData'
@@ -13,11 +14,13 @@ import EthSignTypedDataSdk from './components/EthSignTypedDataSdk'
 import Whitelabel from './components/Whitelabel'
 import Safe from './components/Safe'
 import Logout from './components/Logout'
+import AddCustomNetwork from './components/AddCustomNetwork'
 import { useEffect, useState } from 'react'
 import Address from './components/Address'
 
 function TestComponent() {
   const [address, setAddress] = useState('')
+  const [showBetaFeatures, setShowBetaFeatures] = useState(false)
 
   useEffect(() => {
     if (!window.silk) return
@@ -50,6 +53,7 @@ function TestComponent() {
 
       <ConnectAccount />
       <SwitchChains />
+      <GetCurrentNetwork />
       <Balance />
       <PersonalSign />
       <EthSignTypedDataSdk />
@@ -58,6 +62,24 @@ function TestComponent() {
 
       <RequestEmail />
       <RequestSbt />
+
+      {/* Beta Features Section */}
+      <div className='separator' />
+      <div>
+        <h2 className='text-xl font-bold mb-4'>Beta Features</h2>
+        <button
+          onClick={() => setShowBetaFeatures(!showBetaFeatures)}
+          className="button"
+        >
+          {showBetaFeatures ? 'Hide' : 'Show'} Beta Features
+        </button>
+        
+        {showBetaFeatures && (
+          <div className="mt-4">
+            <AddCustomNetwork />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

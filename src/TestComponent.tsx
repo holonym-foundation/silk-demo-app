@@ -15,6 +15,7 @@ import Whitelabel from './components/Whitelabel'
 import Safe from './components/Safe'
 import Logout from './components/Logout'
 import AddCustomNetwork from './components/AddCustomNetwork'
+import RequestPermissionToken from './components/RequestPermissionToken'
 import { useEffect, useState } from 'react'
 import Address from './components/Address'
 
@@ -43,6 +44,9 @@ function TestComponent() {
       {/* Will try to send to Human Wallet */}
       <div className='separator' />
       <TransactionsSdk />
+
+      <div className='separator' />
+      <RequestPermissionToken />
 
       {/* Will try to send to connected (external) wallet */}
       <div className='separator' />

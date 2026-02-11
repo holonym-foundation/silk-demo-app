@@ -25,7 +25,7 @@ export const wagmiConfig = createConfig({
   chains: defaultChains as any as readonly [Chain, ...Chain[]],
   transports: {
     [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [sepolia.id]: http('https://rpc.sepolia.org'),
     [polygon.id]: http(),
     [gnosis.id]: http(),
     [optimism.id]: http(),

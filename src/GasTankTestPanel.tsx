@@ -5,6 +5,11 @@ import { useAccount } from 'wagmi'
 // It isn't in the public typing (it was Dev-Portal-only), so we reach it off window.
 const silk = () => (window as any).silk
 
+// The single gas-tank deposit wallet (same address on every EVM chain). All
+// top-ups deposit here; the backend credits the chosen virtual tank. Source of
+// truth is GET <gastankOrigin>/health/balances; hardcoded here for the harness.
+const GASTANK_DEPOSIT = '0xb1D9dB6bD3c7F9a8ed824C5e1Ad6f6EDbABD8e1E'
+
 /**
  * App (project) gas-tank test harness.
  *
@@ -57,10 +62,37 @@ export default function GasTankTestPanel() {
       return res
     })
 
-  // NOTE: project-tank funding is not yet supported by the backend — /gastank/topup
-  // only credits the caller's USER tank. This tops up your user tank (needs a real
-  // on-chain deposit tx). Project funding is tracked as a backend change.
-  const fund = () => run('2. fund (user tank)', () => silk().portal('gastank', 'topup'))
+  // Fund the PROJECT tank: deposit 0.002 ETH to the gas-tank wallet on the current
+  // chain, wait for it to confirm, then credit it to the project via topup(project_id).
+  const fund = () =>
+    run('2. fund project tank (0.002 ETH)', async () => {
+      if (!projectId) throw new Error('Run "Init project" first (need a projectId)')
+      const s = silk()
+      const from = address || (await s.request({ method: 'eth_requestAccounts' }))?.[0]
+      if (!from) throw new Error('Log in first')
+      const chainId = parseInt(await s.request({ method: 'eth_chainId' }), 16)
+      const value = '0x' + (2n * 10n ** 15n).toString(16) // 0.002 ETH in wei
+      const depositTx = await s.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to: GASTANK_DEPOSIT, value }]
+      })
+      // The backend verifies the deposit is confirmed on-chain, so wait for the receipt.
+      let confirmed = false
+      for (let i = 0; i < 30 && !confirmed; i++) {
+        await new Promise((r) => setTimeout(r, 4000))
+        const rcpt = await s
+          .request({ method: 'eth_getTransactionReceipt', params: [depositTx] })
+          .catch(() => null)
+        confirmed = !!(rcpt && rcpt.blockNumber)
+      }
+      if (!confirmed) throw new Error(`Deposit ${depositTx} not confirmed yet — retry topup shortly`)
+      const credited = await silk().portal('gastank', 'topup', {
+        project_id: projectId,
+        tx_hash: depositTx,
+        chain_id: chainId
+      })
+      return { depositTx, chainId, credited }
+    })
 
   const setAllowlist = () =>
     run('3. set allowlist', () => {

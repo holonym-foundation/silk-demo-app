@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount, useSendTransaction } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 // The gas-tank admin operations are exposed on the SDK provider via `silk.portal`.
 // It isn't in the public typing (it was Dev-Portal-only), so we reach it off window.
@@ -20,7 +20,6 @@ const silk = () => (window as any).silk
  */
 export default function GasTankTestPanel() {
   const { address } = useAccount()
-  const { sendTransactionAsync } = useSendTransaction()
 
   const [projectId, setProjectId] = useState(
     localStorage.getItem('demo_project_id') || ''
@@ -58,25 +57,43 @@ export default function GasTankTestPanel() {
       return res
     })
 
-  const fund = () => run('2. fund ($5)', () => silk().portal('gastank', 'topup'))
+  // NOTE: project-tank funding is not yet supported by the backend — /gastank/topup
+  // only credits the caller's USER tank. This tops up your user tank (needs a real
+  // on-chain deposit tx). Project funding is tracked as a backend change.
+  const fund = () => run('2. fund (user tank)', () => silk().portal('gastank', 'topup'))
 
   const setAllowlist = () =>
-    run('3. set allowlist', () =>
-      silk().portal('gastank', 'update', {
-        domainAllowlist: [window.location.origin],
-        contractsAllowlist: contract ? { [contract]: method ? [method] : [] } : {}
+    run('3. set allowlist', () => {
+      if (!projectId) throw new Error('Run "Init project" first (need a projectId)')
+      if (!address) throw new Error('Log in first (admin_wallet required)')
+      return silk().portal('gastank', 'update', {
+        projectId,
+        settings: {
+          admin_wallets: [address],
+          project_id: projectId,
+          // allowlist is (chainId, contract-address) pairs the project will sponsor
+          transactions_allowed_to: contract ? [[1, contract]] : []
+        }
       })
-    )
+    })
 
   const getSettings = () =>
-    run('check settings/balance', () => silk().portal('gastank', 'get'))
+    run(projectId ? 'check project tank' : 'check user tank', () =>
+      silk().portal('gastank', 'get', projectId ? { project_id: projectId } : undefined)
+    )
 
   const sponsoredTx = () =>
     run('4. send sponsored tx', async () => {
-      const to = (contract || address) as `0x${string}`
-      if (!to) throw new Error('Connect a wallet or enter a contract first')
-      const hash = await sendTransactionAsync({ to, value: 0n })
-      return { hash, note: 'Sponsored iff projectId is set in initWaaP + tx is allowlisted' }
+      const s = silk()
+      const from =
+        address || (await s.request({ method: 'eth_requestAccounts' }))?.[0]
+      const to = (contract || from) as string
+      if (!to) throw new Error('Log in first')
+      const hash = await s.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to, value: '0x0' }]
+      })
+      return { hash, note: 'Sponsored iff projectId is set in initWaaP + tx is allowlisted + project tank funded' }
     })
 
   const btn = { padding: '8px 12px', margin: 4, cursor: 'pointer' } as const

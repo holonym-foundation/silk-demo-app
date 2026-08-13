@@ -18,7 +18,14 @@ function App() {
     if (useStagingSwitch === null) return;
     try {
       const testReferralCode = 'aaaaaaaaaaaaaaaaaaaaaaaa'
-      const demoProjectId = localStorage.getItem('demo_project_id') || undefined
+      // Any tester can be sponsored by a project: share the demo with
+      // ?projectId=<id>. It persists to localStorage so it sticks across reloads.
+      const urlProjectId = new URLSearchParams(window.location.search).get(
+        'projectId'
+      )
+      if (urlProjectId) localStorage.setItem('demo_project_id', urlProjectId)
+      const demoProjectId =
+        urlProjectId || localStorage.getItem('demo_project_id') || undefined
       const provider = initWaaP({
         useStaging: useStagingSwitch,
         project: { projectId: demoProjectId },

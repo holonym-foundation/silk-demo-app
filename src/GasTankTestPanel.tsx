@@ -10,6 +10,39 @@ const silk = () => (window as any).silk
 // truth is GET <gastankOrigin>/health/balances; hardcoded here for the harness.
 const GASTANK_DEPOSIT = '0xb1D9dB6bD3c7F9a8ed824C5e1Ad6f6EDbABD8e1E'
 
+// Native USDC per supported chain — used to auto-find a chain where a tester
+// holds stablecoins but has no gas, then sponsor a USDC transfer there.
+const STABLECOINS: { chainId: number; name: string; rpc: string; usdc: string }[] =
+  [
+    { chainId: 8453, name: 'Base', rpc: 'https://mainnet.base.org', usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+    { chainId: 10, name: 'Optimism', rpc: 'https://mainnet.optimism.io', usdc: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85' },
+    { chainId: 42161, name: 'Arbitrum', rpc: 'https://arb1.arbitrum.io/rpc', usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
+    { chainId: 1, name: 'Ethereum', rpc: 'https://ethereum-rpc.publicnode.com', usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' }
+  ]
+
+const rpcCall = async (rpc: string, method: string, params: unknown[]) => {
+  const r = await fetch(rpc, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
+  })
+  return (await r.json())?.result
+}
+
+const pad32 = (hexNo0x: string) => hexNo0x.padStart(64, '0')
+
+const usdcBalanceOf = async (rpc: string, usdc: string, owner: string) => {
+  const data = '0x70a08231' + pad32(owner.slice(2))
+  const res = await rpcCall(rpc, 'eth_call', [{ to: usdc, data }, 'latest'])
+  return BigInt(res || '0x0')
+}
+
+// holonym.eth — a recognizable recipient for the sponsored test tx (clearer than
+// a token/gas-tank address). The allowlist covers (chain, this) so it's sponsored.
+const HOLONYM = '0xcC2ca22AaefE22A0144A0260731a40a725AFffF0'
+// Treat < ~0.0003 native as "not enough gas".
+const GAS_THRESHOLD = 3n * 10n ** 14n
+
 /**
  * App (project) gas-tank test harness.
  *
@@ -125,7 +158,9 @@ export default function GasTankTestPanel() {
           admin_wallets: [from],
           project_id: projectId,
           // allowlist is (chainId, contract-address) pairs the project will sponsor
-          transactions_allowed_to: contract ? [[1, contract]] : []
+          transactions_allowed_to: contract ? [[1, contract]] : [],
+          domains_allowed: [window.location.origin],
+          restrictions: null
         }
       })
     })
@@ -147,6 +182,73 @@ export default function GasTankTestPanel() {
         params: [{ from, to, value: '0x0' }]
       })
       return { hash, note: 'Sponsored iff projectId is set in initWaaP + tx is allowlisted + project tank funded' }
+    })
+
+  // Admin: allowlist (chain, holonym.eth) on every supported stablecoin chain, so a
+  // native tx to holonym.eth from any of them is sponsored. Run once (Confirm the modal).
+  const allowlistForSmartTest = () =>
+    run('allowlist for smart test (admin)', async () => {
+      if (!projectId) throw new Error('Run "Init project" first (need a projectId)')
+      const from = await resolveFrom()
+      if (!from) throw new Error('Log in first')
+      return silk().portal('gastank', 'update', {
+        projectId,
+        settings: {
+          admin_wallets: [from],
+          project_id: projectId,
+          transactions_allowed_to: STABLECOINS.map((c) => [c.chainId, HOLONYM]),
+          domains_allowed: [window.location.origin],
+          restrictions: null
+        }
+      })
+    })
+
+  // Any tester: auto-find a chain where they hold USDC but have ~no gas, switch there,
+  // and send a 0-value tx to holonym.eth. No native gas -> the gas tank sponsors it.
+  const smartSponsoredTx = () =>
+    run('smart sponsored tx (USDC, no gas)', async () => {
+      const s = silk()
+      const from = await resolveFrom()
+      if (!from) throw new Error('Log in first')
+      const scan = await Promise.all(
+        STABLECOINS.map(async (c) => {
+          try {
+            const [nativeHex, usdc] = await Promise.all([
+              rpcCall(c.rpc, 'eth_getBalance', [from, 'latest']),
+              usdcBalanceOf(c.rpc, c.usdc, from)
+            ])
+            return { ...c, native: BigInt(nativeHex || '0x0'), usdc }
+          } catch {
+            return { ...c, native: -1n, usdc: -1n }
+          }
+        })
+      )
+      const pick = scan.find((c) => c.usdc > 0n && c.native >= 0n && c.native < GAS_THRESHOLD)
+      if (!pick) {
+        return {
+          note: 'No chain found where you hold USDC but have little/no ETH. Get some USDC on a chain and spend your ETH there, then retry.',
+          scanned: scan.map((c) => ({
+            chain: c.name,
+            usdc: c.usdc.toString(),
+            nativeWei: c.native.toString()
+          }))
+        }
+      }
+      await s.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + pick.chainId.toString(16) }]
+      })
+      const hash = await s.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to: HOLONYM, value: '0x0' }]
+      })
+      return {
+        chain: pick.name,
+        chainId: pick.chainId,
+        usdc: pick.usdc.toString(),
+        hash,
+        note: 'Sent to holonym.eth with no gas of your own — sponsored by the project tank.'
+      }
     })
 
   const btn = { padding: '8px 12px', margin: 4, cursor: 'pointer' } as const
@@ -215,6 +317,39 @@ export default function GasTankTestPanel() {
         </button>
         <button style={btn} onClick={sponsoredTx} disabled={!!busy}>
           4. Send sponsored tx
+        </button>
+      </div>
+
+      <div
+        style={{
+          marginTop: 14,
+          padding: 10,
+          border: '1px dashed #FF5D18',
+          borderRadius: 10,
+          fontSize: 13
+        }}
+      >
+        <b>⚡ Smart gasless test (any tester)</b>
+        <div style={{ opacity: 0.85, margin: '6px 0' }}>
+          Requirement: be signed into a wallet that holds <b>USDC on some chain
+          but has little or no ETH (gas)</b> there. This finds that chain
+          automatically and sends a 0-value tx to <code>holonym.eth</code> —
+          with no gas of your own, the project tank pays.
+          <br />
+          <i>
+            Admin: click “Allowlist for smart test” once first (a blank allowlist
+            won’t sponsor).
+          </i>
+        </div>
+        <button style={btn} onClick={allowlistForSmartTest} disabled={!!busy}>
+          Allowlist for smart test (admin)
+        </button>
+        <button
+          style={{ ...btn, background: '#FF5D18', color: '#fff', border: 'none' }}
+          onClick={smartSponsoredTx}
+          disabled={!!busy}
+        >
+          ⚡ Smart sponsored tx (USDC, no gas)
         </button>
       </div>
 

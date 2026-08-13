@@ -7,6 +7,7 @@ import TestComponent from './TestComponent'
 import { initWaaP } from '@human.tech/waap-sdk'
 import Uniswap from './assets/uniswap.svg'
 import { wagmiConfig } from './wagmi-config'
+import GasTankTestPanel from './GasTankTestPanel'
 
 function App() {
   const [queryClient] = useState(() => new QueryClient())
@@ -17,8 +18,10 @@ function App() {
     if (useStagingSwitch === null) return;
     try {
       const testReferralCode = 'aaaaaaaaaaaaaaaaaaaaaaaa'
+      const demoProjectId = localStorage.getItem('demo_project_id') || undefined
       const provider = initWaaP({
         useStaging: useStagingSwitch,
+        project: { projectId: demoProjectId },
         // useStaging: process.env.VITE_VERCEL_ENV !== 'production'
         // referralCode: testReferralCode
         // config: {
@@ -48,7 +51,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <div className='App'>
           {silkReady ? (
-            <TestComponent />
+            <>
+              <GasTankTestPanel />
+              <TestComponent />
+            </>
           ) : (
             <div className="flex items-center justify-center min-h-screen">
               <div className="text-center">

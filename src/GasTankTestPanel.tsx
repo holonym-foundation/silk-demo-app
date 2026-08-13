@@ -53,10 +53,23 @@ export default function GasTankTestPanel() {
     localStorage.setItem('demo_project_id', pid)
   }
 
+  // The demo logs in via window.silk (the WaaP provider), not wagmi — so read the
+  // wallet address from the provider rather than relying on wagmi's useAccount.
+  const resolveFrom = async (): Promise<string | undefined> => {
+    if (address) return address
+    try {
+      const accts = await silk().request({ method: 'eth_requestAccounts' })
+      return accts?.[0]
+    } catch {
+      return undefined
+    }
+  }
+
   const initProject = () =>
     run('1. init project', async () => {
-      if (!address) throw new Error('Log in / connect a wallet first — admin_wallet is required')
-      const res: any = await silk().portal('project', 'init', { admin_wallet: address })
+      const from = await resolveFrom()
+      if (!from) throw new Error('Log in first — admin_wallet is required')
+      const res: any = await silk().portal('project', 'init', { admin_wallet: from })
       const pid = res?.projectId || res?._id || res?.project_id || res?.id
       if (pid) saveProjectId(pid)
       return res
@@ -95,13 +108,14 @@ export default function GasTankTestPanel() {
     })
 
   const setAllowlist = () =>
-    run('3. set allowlist', () => {
+    run('3. set allowlist', async () => {
       if (!projectId) throw new Error('Run "Init project" first (need a projectId)')
-      if (!address) throw new Error('Log in first (admin_wallet required)')
+      const from = await resolveFrom()
+      if (!from) throw new Error('Log in first (admin_wallet required)')
       return silk().portal('gastank', 'update', {
         projectId,
         settings: {
-          admin_wallets: [address],
+          admin_wallets: [from],
           project_id: projectId,
           // allowlist is (chainId, contract-address) pairs the project will sponsor
           transactions_allowed_to: contract ? [[1, contract]] : []

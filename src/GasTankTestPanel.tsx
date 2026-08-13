@@ -105,8 +105,22 @@ export default function GasTankTestPanel() {
       if (!from) throw new Error('Log in first — admin_wallet is required')
       const res: any = await silk().portal('project', 'init', { admin_wallet: from })
       const pid = res?.projectId || res?._id || res?.project_id || res?.id
-      if (pid) saveProjectId(pid)
-      return res
+      if (pid) {
+        saveProjectId(pid)
+        // Default allowlist so the smart test works with no extra setup:
+        // holonym.eth on every supported chain + this origin.
+        await silk().portal('gastank', 'update', {
+          projectId: pid,
+          settings: {
+            admin_wallets: [from],
+            project_id: pid,
+            transactions_allowed_to: STABLECOINS.map((c) => [c.chainId, HOLONYM]),
+            domains_allowed: [window.location.origin],
+            restrictions: null
+          }
+        })
+      }
+      return { ...res, note: 'Project created + holonym.eth allowlisted on all supported chains.' }
     })
 
   // Fund the PROJECT tank: deposit 0.002 ETH to the gas-tank wallet on the current

@@ -31,6 +31,7 @@ export default function GasTankTestPanel() {
   )
   const [contract, setContract] = useState('')
   const [method, setMethod] = useState('') // 4-byte selector, e.g. 0xa9059cbb
+  const [depositChain, setDepositChain] = useState('1') // chain to deposit from (where your ETH is)
   const [busy, setBusy] = useState('')
   const [out, setOut] = useState('')
 
@@ -83,6 +84,12 @@ export default function GasTankTestPanel() {
       const s = silk()
       const from = address || (await s.request({ method: 'eth_requestAccounts' }))?.[0]
       if (!from) throw new Error('Log in first')
+      // Switch the WaaP provider to the chosen chain (where your ETH is) before
+      // depositing — the demo's wagmi chain buttons don't move the provider.
+      const target = '0x' + parseInt(depositChain || '1', 10).toString(16)
+      await s
+        .request({ method: 'wallet_switchEthereumChain', params: [{ chainId: target }] })
+        .catch(() => {})
       const chainId = parseInt(await s.request({ method: 'eth_chainId' }), 16)
       const value = '0x' + (2n * 10n ** 15n).toString(16) // 0.002 ETH in wei
       const depositTx = await s.request({
@@ -185,6 +192,12 @@ export default function GasTankTestPanel() {
         placeholder="method selector 0xa9059cbb (optional)"
         value={method}
         onChange={(e) => setMethod(e.target.value)}
+      />
+      <input
+        style={input}
+        placeholder="fund chain id (1=Ethereum, 8453=Base, 10=Optimism)"
+        value={depositChain}
+        onChange={(e) => setDepositChain(e.target.value)}
       />
 
       <div style={{ marginTop: 8 }}>

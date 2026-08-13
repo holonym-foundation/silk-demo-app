@@ -109,7 +109,7 @@ export default function GasTankTestPanel() {
       const credited = await silk().portal('gastank', 'topup', {
         project_id: projectId,
         tx_hash: depositTx,
-        chain_id: chainId
+        chain_id: '0x' + chainId.toString(16) // backend U256 wants a hex string
       })
       return { depositTx, chainId, credited }
     })

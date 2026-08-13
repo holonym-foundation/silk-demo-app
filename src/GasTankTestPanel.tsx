@@ -261,8 +261,31 @@ export default function GasTankTestPanel() {
         chainId: pick.chainId,
         usdc: pick.usdc.toString(),
         hash,
-        note: 'Sent to holonym.eth with no gas of your own — sponsored by the project tank.'
+        note: 'Broadcast. VERIFY on the explorer: a funding tx from the gas-tank wallet (0xb1d9db6…) should immediately precede this tx = it was sponsored. This label cannot self-verify.'
       }
+    })
+
+  // Drain your native gas on the chosen chain to ~0 (sends it to holonym.eth) so you're
+  // cleanly gasless for the sponsored test — no dust sitting on the gas margin.
+  const drainGas = () =>
+    run('drain native gas → holonym.eth', async () => {
+      const s = silk()
+      const from = await resolveFrom()
+      if (!from) throw new Error('Log in first')
+      const target = '0x' + parseInt(depositChain || '8453', 10).toString(16)
+      await s
+        .request({ method: 'wallet_switchEthereumChain', params: [{ chainId: target }] })
+        .catch(() => {})
+      const chainId = parseInt(await s.request({ method: 'eth_chainId' }), 16)
+      const bal = BigInt(await s.request({ method: 'eth_getBalance', params: [from, 'latest'] }))
+      const gasPrice = BigInt(await s.request({ method: 'eth_gasPrice', params: [] }))
+      const gasCost = 21000n * gasPrice
+      if (bal <= gasCost) return { chainId, note: 'Already ~gasless here.', balanceWei: bal.toString() }
+      const hash = await s.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to: HOLONYM, value: '0x' + (bal - gasCost).toString(16), gas: '0x5208' }]
+      })
+      return { chainId, hash, note: 'Drained to ~0 — now do a Smart sponsored tx (toggle OFF proves the project pays).' }
     })
 
   const btn = { padding: '8px 12px', margin: 4, cursor: 'pointer' } as const
@@ -357,6 +380,9 @@ export default function GasTankTestPanel() {
         </div>
         <button style={btn} onClick={allowlistForSmartTest} disabled={!!busy}>
           Allowlist for smart test (admin)
+        </button>
+        <button style={btn} onClick={drainGas} disabled={!!busy}>
+          Drain my gas → holonym.eth (chain in “fund chain id”)
         </button>
         <button
           style={{ ...btn, background: '#FF5D18', color: '#fff', border: 'none' }}
